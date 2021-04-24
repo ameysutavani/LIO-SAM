@@ -1,10 +1,6 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(lio_sam)
 
-#set(CMAKE_BUILD_TYPE "Release")
-#set(CMAKE_CXX_FLAGS "-std=c++11")
-#set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wall -g -pthread")
-
 find_package(catkin REQUIRED COMPONENTS
         tf
         roscpp
@@ -78,17 +74,17 @@ add_executable(${PROJECT_NAME}_imageProjection src/imageProjection.cpp)
 add_dependencies(${PROJECT_NAME}_imageProjection ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp)
 target_link_libraries(${PROJECT_NAME}_imageProjection ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 
-## Feature Association
-#add_executable(${PROJECT_NAME}_featureExtraction src/featureExtraction.cpp)
-#add_dependencies(${PROJECT_NAME}_featureExtraction ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp)
-#target_link_libraries(${PROJECT_NAME}_featureExtraction ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBRARIES})
-#
-## Mapping Optimization
-#add_executable(${PROJECT_NAME}_mapOptmization src/mapOptmization.cpp)
-#add_dependencies(${PROJECT_NAME}_mapOptmization ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp)
-#target_compile_options(${PROJECT_NAME}_mapOptmization PRIVATE ${OpenMP_CXX_FLAGS})
-#target_link_libraries(${PROJECT_NAME}_mapOptmization ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} ${OpenMP_CXX_FLAGS} gtsam)
-#
-## IMU Preintegration
-#add_executable(${PROJECT_NAME}_imuPreintegration src/imuPreintegration.cpp)
-#target_link_libraries(${PROJECT_NAME}_imuPreintegration ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBRARIES} gtsam)
+# Feature Association
+add_executable(${PROJECT_NAME}_featureExtraction src/featureExtraction.cpp)
+add_dependencies(${PROJECT_NAME}_featureExtraction ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp)
+target_link_libraries(${PROJECT_NAME}_featureExtraction ${catkin_LIBRARIES} ${PCL_LIBRARIES})
+
+# Mapping Optimization
+add_executable(${PROJECT_NAME}_mapOptmization src/mapOptmization.cpp)
+add_dependencies(${PROJECT_NAME}_mapOptmization ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp)
+target_compile_options(${PROJECT_NAME}_mapOptmization PRIVATE ${OpenMP_CXX_FLAGS})
+target_link_libraries(${PROJECT_NAME}_mapOptmization ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${OpenMP_CXX_FLAGS} gtsam)
+
+# IMU Preintegration
+add_executable(${PROJECT_NAME}_imuPreintegration src/imuPreintegration.cpp)
+target_link_libraries(${PROJECT_NAME}_imuPreintegration ${catkin_LIBRARIES} ${PCL_LIBRARIES} gtsam)

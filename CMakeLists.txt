@@ -2,13 +2,10 @@ cmake_minimum_required(VERSION 3.0.2)
 project(lio_sam)
 
 find_package(catkin REQUIRED COMPONENTS
-        tf
         roscpp
-        rospy
+        tf
         cv_bridge
-        # pcl library
         pcl_conversions
-        # msgs
         std_msgs
         sensor_msgs
         geometry_msgs
@@ -17,9 +14,8 @@ find_package(catkin REQUIRED COMPONENTS
         )
 
 find_package(OpenMP REQUIRED)
-find_package(PCL REQUIRED QUIET)
-find_package(OpenCV REQUIRED QUIET)
-find_package(GTSAM REQUIRED QUIET)
+find_package(PCL REQUIRED)
+find_package(GTSAM REQUIRED)
 
 add_message_files(
         DIRECTORY msg
@@ -35,34 +31,26 @@ generate_messages(
         sensor_msgs
 )
 
+# include directories
+include_directories(
+        include
+        ${catkin_INCLUDE_DIRS}
+)
+
 catkin_package(
         INCLUDE_DIRS include
         DEPENDS PCL GTSAM
 
         CATKIN_DEPENDS
+        roscpp
+        tf
+        cv_bridge
+        pcl_conversions
         std_msgs
-        nav_msgs
-        geometry_msgs
         sensor_msgs
-        message_runtime
+        geometry_msgs
+        nav_msgs
         message_generation
-)
-
-# include directories
-include_directories(
-        include
-        ${catkin_INCLUDE_DIRS}
-        ${PCL_INCLUDE_DIRS}
-        ${OpenCV_INCLUDE_DIRS}
-        ${GTSAM_INCLUDE_DIR}
-)
-
-# link directories
-link_directories(
-        include
-        ${PCL_LIBRARY_DIRS}
-        ${OpenCV_LIBRARY_DIRS}
-        ${GTSAM_LIBRARY_DIRS}
 )
 
 ###########
@@ -82,8 +70,8 @@ target_link_libraries(${PROJECT_NAME}_featureExtraction ${catkin_LIBRARIES} ${PC
 # Mapping Optimization
 add_executable(${PROJECT_NAME}_mapOptmization src/mapOptmization.cpp)
 add_dependencies(${PROJECT_NAME}_mapOptmization ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp)
-target_compile_options(${PROJECT_NAME}_mapOptmization PRIVATE ${OpenMP_CXX_FLAGS})
 target_link_libraries(${PROJECT_NAME}_mapOptmization ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${OpenMP_CXX_FLAGS} gtsam)
+target_compile_options(${PROJECT_NAME}_mapOptmization PRIVATE ${OpenMP_CXX_FLAGS})
 
 # IMU Preintegration
 add_executable(${PROJECT_NAME}_imuPreintegration src/imuPreintegration.cpp)

@@ -284,6 +284,9 @@ public:
             /// corner and surface down-sampled features into their respective containers:
             /// cloudKeyPoses3D, cloudKeyPoses6D, cornerCloudKeyFrames, cornerCloudKeyFrames, surfCloudKeyFrames
             /// 7. Push back graph-optimized current pose for path-visualization
+            /// The graph-optimized-odometry estimated here represents fusion of map-optimized-odometry and gps-odometry
+            /// The graph-optimized-odometry will try to shift/rotate map-optimized-odometry
+            /// so that it matches gps-odometry
             saveKeyFramesAndFactor();
 
             /// In case of a loop-closure, ISAM update will modify values of key-frame poses in above step.

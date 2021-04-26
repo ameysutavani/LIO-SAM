@@ -238,6 +238,7 @@ public:
 
         // extract info and feature cloud
         cloudInfo = *msgIn;
+        /// Copy (extracted) current corner and surface features into laserCloudCornerLast, laserCloudSurfLast
         pcl::fromROSMsg(msgIn->cloud_corner,  *laserCloudCornerLast);
         pcl::fromROSMsg(msgIn->cloud_surface, *laserCloudSurfLast);
 
@@ -248,20 +249,60 @@ public:
         {
             timeLastProcessing = timeLaserInfoCur;
 
+            /// This function updates 'transformTobeMapped' with an initial guess pose.
+            /// The guess is calculated by integrating relative measurements
+            /// 1. Either from pre-integrated IMU odometry (in this case its a 6DoF initial guess) OR
+            /// 2. Just pre-integrated IMU euler angles (in this case its just a rotation initial guess)
             updateInitialGuess();
 
+            /// This function uses a KDTree (initialized on all key-frame poses) to
+            /// extract all surrounding poses around 'transforTobeMapped' estimated above.
+            /// The corner and surface points from all the surrounding key-frames are
+            /// 1. Combined into laserCloudCornerFromMap, laserCloudSurfFromMap and then
+            /// 2. Down-sampled into laserCloudCornerFromMapDS, laserCloudSurfFromMapDS resp.
             extractSurroundingKeyFrames();
 
+            /// Down-sample current features into laserCloudCornerLastDS, laserCloudSurfLastDS
             downsampleCurrentScan();
 
+            /// Traditional current features to map optimization:
+            /// 1. Find map neighbors for each feature in laserCloudCornerLastDS, laserCloudCornerLastDS
+            /// 2. Optimize using Levenberg-Marquardt
+            /// 3. transformTobeMapped is used as optimization variable. Optimized transform is stored
+            /// in transformTobeMapped and incrementalOdometryAffineBack
             scan2MapOptimization();
 
+            /// This function is the HEART of factor-graph optimization in this file.
+            /// This function updates the factor-graph (incrementally) by doing following:
+            /// 1. Add new pose variable to factor graph. This pose is initialized with incrementalOdometryAffineBack
+            /// 2. Add an odometry 'betweenFactor' between current pose and previous pose
+            /// 3. Add a GPS prior factor on current pose if needed (and possible according to covariance thresholds)
+            /// 4. Add loop-closure 'betweenFactors' if any were found by the loop-closure-detection thread
+            /// 5. Run ISAM2 optimization, get graph-optimized value of current pose, store it in transformTobeMapped
+            /// 6. For the key-frame,
+            /// push-back the graph-optimized current pose (in both 3DoF and 6DoF formats),
+            /// corner and surface down-sampled features into their respective containers:
+            /// cloudKeyPoses3D, cloudKeyPoses6D, cornerCloudKeyFrames, cornerCloudKeyFrames, surfCloudKeyFrames
+            /// 7. Push back graph-optimized current pose for path-visualization
             saveKeyFramesAndFactor();
 
+            /// In case of a loop-closure, ISAM update will modify values of key-frame poses in above step.
+            /// Hence it is necessary to 'refresh/update' the pose values in cloudKeyPoses3D, cloudKeyPoses6D
+            /// with ISAM2 updated values.
             correctPoses();
 
+            /// This function published 2 odometries:
+            /// 1. Global, graph-optimized odometry (This odometry will be globally accurate, but may be discontinuous)
+            /// 2. Incremental odometry by integrating relative transforms from above global odometry
+            /// (This odometry may be globally inaccurate, but will be discontinuous)
             publishOdometry();
 
+            /// This function publishes following:
+            /// 1. Key-poses as a point-cloud (Each key-pose is denotes a point)
+            /// 2. Down-sampled surrounding corners and surface feature form map as a point-cloud
+            /// 3. Down-sampled current corner and surface features transformed to global frame as a point-cloud
+            /// 4. Full resolution deskewed current point-cloud transformed to global frame as a point-cloud
+            /// 5. Optimized path in global frame
             publishFrames();
         }
     }
